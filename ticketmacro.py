@@ -12,13 +12,14 @@ from decouple import config
 
 ## 예매 정보
 # 예매 url
-url = 'http://ticket.interpark.com/Ticket/Goods/GoodsInfo.asp?GoodsCode=19018974#'
+url = config('URL')
+
 # 예매 날짜
-start_year = 2019
-start_month = 1
-start_date = 7
-start_hour = 11
-start_min = 50
+start_year = int(config('START_YEAR'))
+start_month = int(config('START_MONTH'))
+start_date = int(config('START_DATE'))
+start_hour = int(config('START_HOUR'))
+start_min = int(config('START_MIN'))
 
 # 로그인 할 회원 정보
 user_id = config('USER_ID')
@@ -31,8 +32,8 @@ driver.get(url)
 
 # 로그인하기
 driver.find_element_by_css_selector('#logstatus').click()
-WebDriverWait(driver, 10)
-driver.switch_to_frame(driver.find_element_by_tag_name("iframe"))
+# WebDriverWait(driver, 10)
+driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))
 time.sleep(0.5)
 
 id_input = driver.find_element_by_id('userId').send_keys(user_id)
@@ -41,7 +42,8 @@ pw_input = driver.find_element_by_id('userPwd').send_keys(user_pw)
 driver.find_element_by_css_selector('#btn_login').click()
 
 # 원하는 시간에 예매창 새로고침
-pause.until(datetime(start_year, start_month, start_date, start_hour, start_min, 00))
+pause.until(datetime(start_year, start_month, start_date, start_hour, start_min, 0))
+# driver.refresh()
 driver.get(url)
 
 # 예매 날짜 선택하기
@@ -55,5 +57,6 @@ date_elem.click()
 driver.switch_to.default_content()
 driver.find_element_by_class_name('tk_dt_btn_TArea').click()
 
-driver.switch_to_window(driver.window_handles[1])
+# 예매창(팝업) 실행
+driver.switch_to.window(driver.window_handles[1])
 
