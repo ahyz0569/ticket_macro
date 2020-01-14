@@ -49,9 +49,10 @@ driver.get(url)
 # 예매 날짜 선택하기
 frame = wait.until(EC.presence_of_element_located((By.ID, "ifrCalendar")))
 driver.switch_to.frame(frame)
-
 date_elem = wait.until(EC.element_to_be_clickable((By.ID, 'CellPlayDate0')))
-# date_elem.click()
+bs4 = BeautifulSoup(driver.page_source, 'html.parser')
+elem = bs4.find_all('a', id='CellPlayDate')
+
 driver.execute_script("javascript:fnSelectPlayDate(0, '20200404');")
 
 # 예매 버튼 클릭
@@ -108,7 +109,7 @@ try:
             try:
                 driver.execute_script(seat['onclick'] + ";")
                 # 2단계 프레임 받아오기
-                driver.switch_to_default_content()
+                driver.switch_to.default_content()
                 wait.until(EC.presence_of_element_located((By.ID, 'ifrmSeat')))
                 frame = driver.find_element_by_id('ifrmSeat')
                 driver.switch_to.frame(frame)
@@ -118,7 +119,7 @@ try:
                 seatCheck=True
                 # 이선좌 경고창 감지
                 try:
-                    alert = driver.switch_to_alert()
+                    alert = driver.switch_to.alert()
                     alert.accept()
                     time.sleep(0.5)
                     seatCheck = False
