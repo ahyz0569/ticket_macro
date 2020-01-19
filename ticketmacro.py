@@ -14,12 +14,22 @@ from bs4 import BeautifulSoup
 # 예매 url
 url = config('URL')
 
-# 예매 날짜
+# 예매 날짜 정보 (Datetime 객체 생성 용)
 start_year = int(config('START_YEAR'))
 start_month = int(config('START_MONTH'))
 start_date = int(config('START_DATE'))
 start_hour = int(config('START_HOUR'))
 start_min = int(config('START_MIN'))
+
+# print(start_year)
+# print(start_month)
+# print(start_date)
+# print(start_hour)
+# print(start_min)
+
+# 예매 날짜 정보 (예매창 날짜 선택용)
+user_date = config('PLAY_DATE')
+user_datetime = datetime(year = start_year, month = start_month, day = start_date, hour = start_hour, minute = start_min, second=0, microsecond=850000) 
 
 # 로그인 할 회원 정보
 user_id = config('USER_ID')
@@ -42,25 +52,50 @@ pw_input = driver.find_element_by_id('userPwd').send_keys(user_pw)
 driver.find_element_by_css_selector('#btn_login').click()
 
 # 원하는 시간에 예매창 새로고침
-pause.until(datetime(start_year, start_month, start_date, start_hour, start_min, 0))
+pause.until(user_datetime)
 # driver.refresh()
 driver.get(url)
 
-# 예매 날짜 선택하기
-frame = wait.until(EC.presence_of_element_located((By.ID, "ifrCalendar")))
-driver.switch_to.frame(frame)
-date_elem = wait.until(EC.element_to_be_clickable((By.ID, 'CellPlayDate0')))
-bs4 = BeautifulSoup(driver.page_source, 'html.parser')
-elem = bs4.find_all('a', id='CellPlayDate')
-
-driver.execute_script("javascript:fnSelectPlayDate(0, '20200404');")
+# # 예매 날짜 선택하기 (Main 화면)
+# frame = wait.until(EC.presence_of_element_located((By.ID, "ifrCalendar")))
+# driver.switch_to.frame(frame)
+# date_elem = wait.until(EC.element_to_be_clickable((By.ID, 'CellPlayDate0')))
+# bs4 = BeautifulSoup(driver.page_source, 'html.parser')
+# day1 = bs4.find('td', id='CellPlayDate0').find('a')
+# driver.execute_script("javascript:" + day1['onclick'] + ";")
 
 # 예매 버튼 클릭
-driver.switch_to.default_content()
+# driver.switch_to.default_content()
 driver.find_element_by_class_name('tk_dt_btn_TArea').click()
 
 # 예매창(팝업) 실행
 driver.switch_to.window(driver.window_handles[1])
+
+# 예매1단계: 예매날짜 선택
+frame = wait.until(EC.presence_of_element_located((By.ID, 'ifrmBookStep')))
+driver.switch_to.frame(frame)
+# 달력 정보 가져오기
+# wait.until(EC.presence_of_element_located((By.ID, 'CellPlayDate')))
+bs4 = BeautifulSoup(driver.page_source, "html.parser")
+calender = bs4.find_all('a', id='CellPlayDate')
+# playdate = calender[0]['onclick']
+
+# 입력한 예매날짜와 일치하는 함수 찾기
+for i in range(0, len(calender)):
+    if "fnSelectPlayDate(" +str(i)+ ", '" +user_date+ "')" == calender[i]['onclick']:
+        playdate = calender[i]['onclick']
+        print("same with input date")
+        break
+
+# 해당 날짜 선택하기
+print('selected date', playdate)
+driver.execute_script("javascript:" + playdate + ";")
+
+# 회차 검사하기 (이건 생략해도 될거같음)
+# 다음단계, 2단계 넘어가기 기능 구현하기
+driver.switch_to.default_content()
+time.sleep(0.3)
+driver.execute_script("javascript:fnNextStep('P');")
 
 # 좌석 선택하기
 seatCheck = False
@@ -100,11 +135,15 @@ try:
     print('available seat list number: {}'.format(len(seatList)))
 
     # 좌석 존재 여부 체크
-    for i in range(0, len(seatList)):
-        seat = seatList[i]
+    for seat in seatList:
+        # seat = seatList[i]
 
         # 선택한 미니맵에 좌석 존재할 경우
-        if seat is not None:            
+        if seat is not None:
+            
+            # 원하는 구역 좌석 선택하기
+            # 태그 안에 
+
             # 좌석 선택하기
             try:
                 driver.execute_script(seat['onclick'] + ";")
@@ -117,6 +156,7 @@ try:
                 # 3단계 넘어가기
                 driver.execute_script("javascript:fnSelect();")
                 seatCheck=True
+
                 # 이선좌 경고창 감지
                 try:
                     alert = driver.switch_to.alert()
