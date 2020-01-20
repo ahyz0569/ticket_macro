@@ -28,7 +28,7 @@ start_min = int(config('START_MIN'))
 # print(start_min)
 
 # 예매 날짜 정보 (예매창 날짜 선택용)
-user_date = config('PLAY_DATE')
+book_date = config('BOOK_DATE')
 user_datetime = datetime(year = start_year, month = start_month, day = start_date, hour = start_hour, minute = start_min, second=0, microsecond=850000) 
 
 # 로그인 할 회원 정보
@@ -50,6 +50,41 @@ id_input = driver.find_element_by_id('userId').send_keys(user_id)
 pw_input = driver.find_element_by_id('userPwd').send_keys(user_pw)
 
 driver.find_element_by_css_selector('#btn_login').click()
+
+# 공연 기간 조회
+play_period=driver.find_element_by_css_selector('.info_Lst > li > dl > dd > span').text
+playDateList=[]
+
+# 공연 기간이 2일 이상인 경우
+try:
+    playPeriodList= play_period.split(' ~ ')
+    play_interval=int(playPeriodList[-1].split('.')[2]) - int(playPeriodList[0].split('.')[2])
+    
+    # 공연 기간이 2일인 경우
+    if play_interval == 1:
+        for date in playPeriodList:
+            playDateList.append(date.replace('.',''))            
+
+    # 공연 기간이 3일인 경우
+    elif play_interval == 2:
+        for i in range(0, 3):
+            ym = playPeriodList[0][:-2].replace('.','')
+            f_day = playPeriodList[0][-2:].replace('.','')
+            day = int(f_day) + i
+            playDateList.append(ym + str(day))
+    
+    # 공연 기간이 4일 이상인 경우
+    else:
+        print('공연 기간이 4일 이상임, 예매팝업창에서 공연일정 확인 후 선택할 예정')
+
+# 공연 기간이 1일인 경우
+except:
+    playDateList=play_period.replace('.','')
+
+# 코드 구동 확인
+for date in playDateList:
+    print('공연일정', date)
+
 
 # 원하는 시간에 예매창 새로고침
 pause.until(user_datetime)
@@ -81,9 +116,14 @@ calender = bs4.find_all('a', id='CellPlayDate')
 # playdate = calender[0]['onclick']
 
 ####### 이 부분 실행시간이 너무 길다 이거 수정하던가 메인에서 선택하는걸로 쓰자
+## 예매 URL에서 공연 기간 (selector: #TabA > div.TabA_Info > ul.info_Lst > li:nth-child(3) > dl > dd > span:nth-child(1))
+# TabA > div.TabA_Info > ul.info_Lst 
+# 정보 크롤링 한 후에 입력한 예매날짜와 공연날짜가 맞는지 예매 오픈 전에 확인하게 구현하기
+# <a id="CellPlayDate" name="CellPlayDate" class="sel1" 
+# href="javascript:;" onclick="fnSelectPlayDate(0, '20200314')">14</a>
 # 입력한 예매날짜와 일치하는 함수 찾기
 for i in range(0, len(calender)):
-    if "fnSelectPlayDate(" +str(i)+ ", '" +user_date+ "')" == calender[i]['onclick']:
+    if "fnSelectPlayDate(" +str(i)+ ", '" +book_date+ "')" == calender[i]['onclick']:
         playdate = calender[i]['onclick']
         print("same with input date")
         break
