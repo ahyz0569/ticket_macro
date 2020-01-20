@@ -63,7 +63,7 @@ try:
     # 공연 기간이 2일인 경우
     if play_interval == 1:
         for date in playPeriodList:
-            playDateList.append(date.replace('.',''))            
+            playDateList.append(date.replace('.',''))                    
 
     # 공연 기간이 3일인 경우
     elif play_interval == 2:
@@ -85,6 +85,18 @@ except:
 for date in playDateList:
     print('공연일정', date)
 
+# 예매 팝업창에서 예매 일자 선택에 사용할 변수 할당
+book_index = -1
+# 공연 기간과 예매일자(book_date)가 일치하는 지 확인
+if playDateList is not None:
+    for i in range(0, len(playDateList)):
+        # 입력한 예매일자와 공연 정보가 일치하는 경우
+        if book_date == playDateList[i]:
+            book_index = i
+            print("예매 정보 일치")
+            break
+    if book_index == -1:
+        print('예매일정을 잘못입력함 다시입력하셈')
 
 # 원하는 시간에 예매창 새로고침
 pause.until(user_datetime)
@@ -107,26 +119,32 @@ driver.find_element_by_class_name('tk_dt_btn_TArea').click()
 driver.switch_to.window(driver.window_handles[1])
 
 # 예매1단계: 예매날짜 선택
+print('달력frame시작')
+#### webdriverwait 체크 필요
 frame = wait.until(EC.presence_of_element_located((By.ID, 'ifrmBookStep')))
 driver.switch_to.frame(frame)
+print('달력frame끝')
+
 # 달력 정보 가져오기
 # wait.until(EC.presence_of_element_located((By.ID, 'CellPlayDate')))
+print('bs4시작')
 bs4 = BeautifulSoup(driver.page_source, "html.parser")
 calender = bs4.find_all('a', id='CellPlayDate')
+print('bs4끝')
 # playdate = calender[0]['onclick']
 
-####### 이 부분 실행시간이 너무 길다 이거 수정하던가 메인에서 선택하는걸로 쓰자
-## 예매 URL에서 공연 기간 (selector: #TabA > div.TabA_Info > ul.info_Lst > li:nth-child(3) > dl > dd > span:nth-child(1))
-# TabA > div.TabA_Info > ul.info_Lst 
-# 정보 크롤링 한 후에 입력한 예매날짜와 공연날짜가 맞는지 예매 오픈 전에 확인하게 구현하기
-# <a id="CellPlayDate" name="CellPlayDate" class="sel1" 
-# href="javascript:;" onclick="fnSelectPlayDate(0, '20200314')">14</a>
-# 입력한 예매날짜와 일치하는 함수 찾기
-for i in range(0, len(calender)):
-    if "fnSelectPlayDate(" +str(i)+ ", '" +book_date+ "')" == calender[i]['onclick']:
-        playdate = calender[i]['onclick']
-        print("same with input date")
-        break
+# play_interval이 0 ~ 2 인 경우: 이미 할당한 인덱스로 예매일자 선택하게 하기 (calender[book_index])
+if play_interval <= 2:
+    print('코드 실행')
+    playdate = calender[book_index]['onclick']
+
+# play_interval이 3 이상인 경우: 입력한 예매날짜와 일치하는 함수 찾기
+else:
+    for i in range(0, len(calender)):
+        if "fnSelectPlayDate(" +str(i)+ ", '" +book_date+ "')" == calender[i]['onclick']:
+            playdate = calender[i]['onclick']
+            print("same with input date")
+            break
 
 # 해당 날짜 선택하기
 print('selected date', playdate)
