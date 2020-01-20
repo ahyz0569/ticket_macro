@@ -1,4 +1,5 @@
 .env
+debug.log
 
 # Created by https://www.gitignore.io/api/python,windows,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=python,windows,visualstudiocode

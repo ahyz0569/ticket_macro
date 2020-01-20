@@ -80,6 +80,7 @@ bs4 = BeautifulSoup(driver.page_source, "html.parser")
 calender = bs4.find_all('a', id='CellPlayDate')
 # playdate = calender[0]['onclick']
 
+####### 이 부분 실행시간이 너무 길다 이거 수정하던가 메인에서 선택하는걸로 쓰자
 # 입력한 예매날짜와 일치하는 함수 찾기
 for i in range(0, len(calender)):
     if "fnSelectPlayDate(" +str(i)+ ", '" +user_date+ "')" == calender[i]['onclick']:
@@ -142,7 +143,10 @@ try:
         if seat is not None:
             
             # 원하는 구역 좌석 선택하기
-            # 태그 안에 
+            # title 태그 안("-") 기호로 나눈 뒤
+            # 뒤에서 두번째 있는 문자열(예/ B구역)로 구역을 검사하고
+            # 맨 마지막에 있는 숫자(좌석 번호)를 추출해서 검사하기
+            # 우선 구역 > 앞자리 우선 순으로 좌석을 선택할 수 있게 로직 짜기
 
             # 좌석 선택하기
             try:
