@@ -13,6 +13,8 @@ from bs4 import BeautifulSoup
 ## 예매 정보
 # 예매 url
 url = config('URL')
+play_code = url.split('=')[-1]
+book_url = config('BOOK_URL')
 
 # 예매 날짜 정보 (Datetime 객체 생성 용)
 start_year = int(config('START_YEAR'))
@@ -20,12 +22,6 @@ start_month = int(config('START_MONTH'))
 start_date = int(config('START_DATE'))
 start_hour = int(config('START_HOUR'))
 start_min = int(config('START_MIN'))
-
-# print(start_year)
-# print(start_month)
-# print(start_date)
-# print(start_hour)
-# print(start_min)
 
 # 예매 날짜 정보 (예매창 날짜 선택용)
 book_date = config('BOOK_DATE')
@@ -35,7 +31,7 @@ user_datetime = datetime(year = start_year, month = start_month, day = start_dat
 user_id = config('USER_ID')
 user_pw = config('USER_PW')
 
-
+# 드라이버 실행
 driver = webdriver.Chrome('C:/ai/program/chromedriver')
 wait = WebDriverWait(driver, 10)
 driver.get(url)
@@ -50,6 +46,7 @@ id_input = driver.find_element_by_id('userId').send_keys(user_id)
 pw_input = driver.find_element_by_id('userPwd').send_keys(user_pw)
 
 driver.find_element_by_css_selector('#btn_login').click()
+time.sleep(0.5)
 
 # 공연 기간 조회
 play_period=driver.find_element_by_css_selector('.info_Lst > li > dl > dd > span').text
@@ -100,60 +97,13 @@ if playDateList is not None:
 
 # 원하는 시간에 예매창 새로고침
 pause.until(user_datetime)
-# driver.refresh()
-driver.get(url)
 
-# # 예매 날짜 선택하기 (Main 화면)
-# frame = wait.until(EC.presence_of_element_located((By.ID, "ifrCalendar")))
-# driver.switch_to.frame(frame)
-# date_elem = wait.until(EC.element_to_be_clickable((By.ID, 'CellPlayDate0')))
-# bs4 = BeautifulSoup(driver.page_source, 'html.parser')
-# day1 = bs4.find('td', id='CellPlayDate0').find('a')
-# driver.execute_script("javascript:" + day1['onclick'] + ";")
+# 예매창 실행
+print(book_url + play_code + '&PlayDate=' + book_date)
+book_direct_url = book_url + play_code + '&PlayDate=' + book_date
+driver.get(book_direct_url)
 
-# 예매 버튼 클릭
-# driver.switch_to.default_content()
-driver.find_element_by_class_name('tk_dt_btn_TArea').click()
-
-# 예매창(팝업) 실행
-driver.switch_to.window(driver.window_handles[1])
-
-# 예매1단계: 예매날짜 선택
-print('달력frame시작')
-#### webdriverwait 체크 필요
-frame = wait.until(EC.presence_of_element_located((By.ID, 'ifrmBookStep')))
-driver.switch_to.frame(frame)
-print('달력frame끝')
-
-# 달력 정보 가져오기
-# wait.until(EC.presence_of_element_located((By.ID, 'CellPlayDate')))
-print('bs4시작')
-bs4 = BeautifulSoup(driver.page_source, "html.parser")
-calender = bs4.find_all('a', id='CellPlayDate')
-print('bs4끝')
-# playdate = calender[0]['onclick']
-
-# play_interval이 0 ~ 2 인 경우: 이미 할당한 인덱스로 예매일자 선택하게 하기 (calender[book_index])
-if play_interval <= 2:
-    print('코드 실행')
-    playdate = calender[book_index]['onclick']
-
-# play_interval이 3 이상인 경우: 입력한 예매날짜와 일치하는 함수 찾기
-else:
-    for i in range(0, len(calender)):
-        if "fnSelectPlayDate(" +str(i)+ ", '" +book_date+ "')" == calender[i]['onclick']:
-            playdate = calender[i]['onclick']
-            print("same with input date")
-            break
-
-# 해당 날짜 선택하기
-print('selected date', playdate)
-driver.execute_script("javascript:" + playdate + ";")
-
-# 회차 검사하기 (이건 생략해도 될거같음)
-# 다음단계, 2단계 넘어가기 기능 구현하기
-driver.switch_to.default_content()
-time.sleep(0.3)
+# 다음단계, 2단계 넘어가기
 driver.execute_script("javascript:fnNextStep('P');")
 
 # 좌석 선택하기
@@ -165,7 +115,9 @@ try:
     driver.switch_to.frame(frame)
 
     # 안심예매문자 입력창 감지
-    wait.until(EC.invisibility_of_element_located((By.ID, 'divRecaptcha')))
+    print('안심예매문자 감지 코드 실행')
+    time.sleep(0.3)
+    WebDriverWait(driver, 30).until(EC.invisibility_of_element_located((By.ID, 'divRecaptcha')))
 
     # 미니맵 존재여부 검사
     try:
